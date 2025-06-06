@@ -1,115 +1,89 @@
-#!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+/**
+ * 自定义 MCP 服务内容
+ *
+ * 打包后位置 build/index.js
+ */
 import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-const MARKET_RESEARCH_ASSISTANT = {
-  name: "market_research_tool",
-  description:  "This is an intelligent market research report generation assistant, specifically designed to efficiently and professionally build research plans.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      query: {
-        type: "string",
-        description: "Search query (max 400 chars, 50 words)"
-      }
-    },
-    required: ["query"],
-  },
-};
-// Server implementation
-const server = new Server(
+  McpServer,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+// 创建一个 MCP Server
+const server = new McpServer({
+  name: "McpServerToolkit",
+  version: "0.1.0",
+});
+
+// MCP 工具
+server.tool(
+    "number_add",
+    "简单的求和工具，当想要计算两个数字相加后的结果时调用",
     {
-      name: "bailian-mcp-workflow-server",
-      version: "0.1.0",
+      a: z.number().describe("第一个数字"),
+      b: z.number().describe("第二个数字"),
     },
-    {
-      capabilities: {
-        tools: {},
-      },
-    }
+    async ({ a, b }) => ({
+      content: [{ type: "text", text: String(a + b) }],
+    })
 );
-// Check for API key
-const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY!;
-if (!DASHSCOPE_API_KEY) {
-  console.error("Error: DASHSCOPE_API_KEY environment variable is required");
-  process.exit(1);
-}
-const APP_ID = process.env.APP_ID!;
-if (!APP_ID) {
-  console.error("Error: APP_ID environment variable is required");
-  process.exit(1);
-}
-async function performWebMarketResearch(query: any) {
-  const url = 'https://dashscope.aliyuncs.com/api/v1/apps/'+APP_ID+'/completion';
-  // 构造请求体x`x`x`x`
-  const requestBody = {
-    "input": {
-      "prompt": query
-    },
-    "parameters":  {},
-    "debug": {}
-  };
-  const response = await fetch(url, {
-    method: 'POST', // 修改为 POST 请求
-    headers: {
-      'Content-Type': 'application/json', // 指定请求体为 JSON 格式
-      'Authorization': "Bearer "+DASHSCOPE_API_KEY
-    },
-    body: JSON.stringify(requestBody) // 将请求体序列化为 JSON 字符串
-  });
-  if (!response.ok) {
-    throw new Error(`Bailian API error: ${response.status} ${response.statusText}\n${await response.text()}`);
-  }
-  const descriptionsData = await response.json(); // 解析响应 JSON 数据
-  const strjson = JSON.stringify(descriptionsData)
-  return strjson;
-}
-// Tool handlers
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [MARKET_RESEARCH_ASSISTANT],
+
+// MCP 工具 - 获取现在时间
+server.tool("get_current_time", "返回当前的日期和时间", {}, async () => ({
+  content: [{ type: "text", text: new Date().toISOString() }],
 }));
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  try {
-    const { name, arguments: args } = request.params;
-    if (!args) {
-      throw new Error("No arguments provided");
-    }
-    switch (name) {
-      case "market_research_tool": {
-        const { query } = args;
-        const results = await performWebMarketResearch(query);
-        return {
-          content: [{ type: "text", text: results }],
-          isError: false,
-        };
-      }
-      default:
-        return {
-          content: [{ type: "text", text: `Unknown tool: ${name}` }],
-          isError: true,
-        };
-    }
-  } catch (error) {
-    return {
-      content: [
+
+// MCP 提示词
+server.prompt(
+    "translate_master",
+    "简单的翻译工具，可以将内容翻译成指定语言",
+    { target_language: z.string().describe("目标语言") },
+    ({ target_language }) => ({
+      messages: [
         {
-          type: "text",
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          role: "user",
+          content: {
+            type: "text",
+            text: `你是一个翻译专家，擅长将任何语言翻译成${target_language}。请翻译以下内容：`,
+          },
         },
       ],
-      isError: true,
-    };
-  }
-});
-async function runServer() {
+    })
+);
+
+// MCP 静态资源
+server.resource("config", "config://app", async (uri) => ({
+  contents: [
+    {
+      uri: uri.href,
+      text: "App configuration here",
+    },
+  ],
+}));
+
+// MCP 资源模板
+server.resource(
+    "user-profile",
+    new ResourceTemplate("users://{userId}/profile", { list: undefined }),
+    async (uri, { userId }) => ({
+      contents: [
+        {
+          uri: uri.href,
+          text: `Profile data for user ${userId}`,
+        },
+      ],
+    })
+);
+
+// stdio 模式运行
+async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Bailian Mcp Workflow Server running on stdio");
+  console.error("MCP Server running on stdio");
 }
-runServer().catch((error) => {
-  console.error("Fatal error running server:", error);
+
+main().catch((error) => {
+  console.error("Fatal error in main():", error);
   process.exit(1);
 });
