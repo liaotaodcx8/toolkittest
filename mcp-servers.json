@@ -1,0 +1,22 @@
+{
+    "mcpServers": {
+      "everything": {
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-everything"],
+        "env": {
+          "hello": "Hello MCP!"
+        }
+      },
+      "toolkittest": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "toolkittest"
+        ],
+        "env": {
+          "DASHSCOPE_API_KEY": "sk-4da5f22c452a4f01bbbc3fc9ce0f7e00",
+          "APP_ID": "cbc1b6729c424990a40a760cbfdbb8c6"
+        }
+      }
+    }
+  }

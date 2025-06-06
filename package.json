@@ -1,0 +1,37 @@
+{
+    "name": "toolkittest",
+    "version": "0.1.3",
+    "description": "A Model Context Protocol server learning lab",
+    "type": "module",
+    "homepage": "https://modelcontextprotocol.io",
+    "author": "DarkWinoom (https://gitee.com/darkwinoom/)",
+    "scripts": {
+        "inspector": "tsc && npx @modelcontextprotocol/inspector node build/index.js",
+        "inspector:everything": "tsc && npx @modelcontextprotocol/inspector --config mcp-server.json --server everything",
+        "build": "tsc && shx chmod +x build/*.js",
+        "lint": "tsc --noEmit && eslint .",
+        "prepare": "npm run build",
+        "watch": "tsc --watch"
+    },
+    "bin": {
+        "mcp-server-brave-search": "build/index.js"
+    },
+    "files": [
+        "build"
+    ],
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.11.0",
+        "axios": "^1.9.0",
+        "dotenv": "^16.5.0",
+        "zod": "^3.24.4"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.16",
+        "eslint": "^9.26.0",
+        "eslint-config-prettier": "^10.1.3",
+        "eslint-plugin-prettier": "^5.4.0",
+        "prettier": "^3.5.3",
+        "shx": "^0.4.0",
+        "typescript": "^5.8.3"
+    }
+}
