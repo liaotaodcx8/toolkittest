@@ -1,3 +1,7 @@
+<a href="https://glama.ai/mcp/servers/@liaotaodcx8/toolkittest">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@liaotaodcx8/toolkittest/badge" />
+</a>
+
 # MCP Server 学习实验室
 
 一个基于 **Node.js + TypeScript** 的 MCP Server 开发实践仓库，使用官方 SDK `@modelcontextprotocol/sdk`，专注于探索如何将本地服务、API、工具封装为符合 MCP 协议的标准化服务。适合 AI 开发者学习协议实现、工具链集成及服务扩展。
